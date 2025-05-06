@@ -4,6 +4,7 @@ import './index.css'
 import './App.css'
 import Footer from './Footer';
 import Header from './Header';
+import Keyboard from './KeyBoard';
 const App = () => {
     const [guess, setGuess] = useState([[""], ["", ""], ["", "", ""], ["", "", "", ""], ["", "", "", "", ""]])
     const [status, setStatus] = useState([[""], ["", ""], ["", "", ""], ["", "", "", ""], ["", "", "", "", ""]])
@@ -66,31 +67,35 @@ const App = () => {
             } else {
                 evaluate(i);
                 if (i < 4) setCurrentRow(i + 1);
-                else setMessage(word == trimmed ? "well done!" : word)
+                else{
+                    setMessage(word == trimmed ? "well done!" : word)
+                    inputRefs.current[4][0].current.blur();
+                } 
             }
         }
     }
     const evaluate = (row) => {
         const words = word.split("");
         const m = new Map();
+        const newStatus = [...status.map(row => [...row])];
         for (var j = 0; j < words.length; j++) {
             if (m.get(words[j]) === undefined) m.set(words[j], 0);
             m.set(words[j], m.get(words[j]) + 1);
         }
         for (var i = 0; i < guess[row].length; i++) {
             if (guess[row][i] === words[i]) {
-                status[row][i] = "correct"
+                newStatus[row][i] = "correct"
                 m.set(words[i], m.get(words[i]) - 1);
             }
         }
         for (var k = 0; k < guess[row].length; k++) {
-            if (m.get(guess[row][k]) !== undefined && m.get(guess[row][k]) > 0 && status[row][k] !== "correct") {
-                status[row][k] = "present";
+            if (m.get(guess[row][k]) !== undefined && m.get(guess[row][k]) > 0 && newStatus[row][k] !== "correct") {
+                newStatus[row][k] = "present";
                 m.set(guess[row][k], m.get(guess[row][k]) - 1);
             }
-            else if (status[row][k] !== "correct") status[row][k] = "absent"
+            else if (newStatus[row][k] !== "correct") newStatus[row][k] = "absent"
         }
-        setStatus(status);
+        setStatus(newStatus);
     }
     const shakeyshake = (i) => {
         var arr = [...invalidGuess]
@@ -123,10 +128,10 @@ const App = () => {
     return (
         <>
             <Header />
-            <p id = "message" className={message===""?"hidden":""}>{message}</p>
-            <div className="pyramid">
+            <p id = "message" className={message===""?"hidden":""}>{message || "..."}</p>
+            <div className="pyramid p-4 max-w-[600px] mx-auto">
                 <div className="row">
-                    <input type="text" autoComplete="off" ref={inputRefs.current[0][0]} disabled={currentRow !== 0} id="guess11" className={`square ${invalidGuess[0] ? 'shake' : ''}${status[0][0]}`} minLength="0" maxLength="1" value={guess[0][0]} onChange={(e) => handleGuess(e, 0, 0)} onKeyDown={(e) => handleEnter(e, 0, 0)} />
+                    <input type="text" autoComplete="off" ref={inputRefs.current[0][0]} disabled={currentRow !== 0} id="guess11" className={`square ${invalidGuess[0] ? 'shake' : ''}${status[0][0]} `} minLength="0" maxLength="1" value={guess[0][0]} onChange={(e) => handleGuess(e, 0, 0)} onKeyDown={(e) => handleEnter(e, 0, 0)} />
                 </div>
 
                 <div className="row">
@@ -155,6 +160,7 @@ const App = () => {
                     <input type="text" autoComplete="off" ref={inputRefs.current[4][4]} disabled={currentRow !== 4} id="guess55" className={`square ${invalidGuess[4] ? 'shake' : ''}${status[4][4]}`} minLength="0" maxLength="1" value={guess[4][4]} onChange={(e) => handleGuess(e, 4, 4)} onKeyDown={(e) => handleEnter(e, 4, 4)} />
                 </div>
             </div>
+            <Keyboard/>
             <Footer />
         </>
     )
