@@ -37,7 +37,6 @@ const App = () => {
                 const toGuess = words.at(Math.floor(Math.random() * words.length)).trim();
                 setValidAnswers(words)
                 setWord(toGuess)
-                console.log(toGuess);
             })
         const loadGuess = async () => {
             for (var i = 0; i < 5; i++) {
@@ -60,8 +59,6 @@ const App = () => {
         if (e.key === 'Enter' && i === j) {
             const trimmed = guess[i].join("").toLowerCase().trim();
             const validGuess = (validGuesses[i].includes(trimmed) || validAnswers.includes(trimmed)) && trimmed.length === (i + 1);
-            console.log(trimmed);
-            console.log(validGuesses[i]);
             if (!validGuess) {
                 shakeyshake(i);
             } else {

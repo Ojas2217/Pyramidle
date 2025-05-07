@@ -25,7 +25,8 @@ export default function Header() {
                         <p>Welcome to Pyramidle!</p>
                         <p>You get 5 guesses to guess a 5 letter word.</p>
                         <p>You start off guessing a one letter word, then two, then three and so on.</p>
-                        <p>Good Luck!</p>
+                        <p>New word on every refresh, Good Luck!</p>
+                        
                     </div>
                 ):""
             }
