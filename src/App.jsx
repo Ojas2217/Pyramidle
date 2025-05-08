@@ -106,7 +106,7 @@ const App = () => {
             }
             else if(newStatus[row][k] !== "correct"){
                 newStatus[row][k] = "absent"
-                if(newLetters[guess[row][k]]!=="present"){
+                if(newLetters[guess[row][k]]!=="present" && newLetters[guess[row][k]]!=="correct"){
                     newLetters[guess[row][k]]="absent"
                 }
             }
