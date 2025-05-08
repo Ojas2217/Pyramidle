@@ -29,6 +29,7 @@ const App = () => {
             case 2: inputRefs.current[2][0].current.focus(); break;
             case 3: inputRefs.current[3][0].current.focus(); break;
             case 4: inputRefs.current[4][0].current.focus(); break;
+            default: break;
         }
     }, [currentRow])
     useEffect(() => {
@@ -73,7 +74,7 @@ const App = () => {
                 if (i < 4) setCurrentRow(i + 1);
                 else{
                     setMessage(word == trimmed ? "well done!" : word)
-                    inputRefs.current[4][0].current.blur();
+                    setCurrentRow(-1)
                 } 
             }
         }
