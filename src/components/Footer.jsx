@@ -6,7 +6,7 @@ export default function Footer() {
       
       <div className="icons flex space-x-2 ml-2">
         <a href ="https://www.instagram.com/ojas2217/"><FaInstagram className="i size-12 hover:scale-110 transition"/></a>
-        <a href ="https://github.com/Ojas2217"><FaGithub className="g size-12 hover:scale-110 transition"/></a>
+        <a href ="https://github.com/Ojas2217/Pyramidle"><FaGithub className="g size-12 hover:scale-110 transition"/></a>
         <a href ="https://www.linkedin.com/in/ojas-pandey-06a318240/"><FaLinkedin className="l size-12 hover:scale-110 transition"/></a>
       </div>
 
