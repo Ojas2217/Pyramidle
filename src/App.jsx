@@ -1,26 +1,27 @@
 import { useEffect, useState, useRef } from 'react';
 import React from 'react';
-import './index.css'
-import './App.css'
-import Footer from './Footer';
-import Header from './Header';
-import Keyboard from './KeyBoard';
+import './css/index.css'
+import './css/App.css'
+import Footer from './components/Footer';
+import Header from './components/Header';
+import Keyboard from './components/KeyBoard';
 const App = () => {
     const [guess, setGuess] = useState([[""], ["", ""], ["", "", ""], ["", "", "", ""], ["", "", "", "", ""]])
     const [status, setStatus] = useState([[""], ["", ""], ["", "", ""], ["", "", "", ""], ["", "", "", "", ""]])
     const [message, setMessage] = useState('')
     const [word, setWord] = useState('')
     const [currentRow, setCurrentRow] = useState(0);
+    const [currentColumn, setCurrentColumn] = useState(0);
     const [validGuesses, setValidGuesses] = useState([[], [], [], [], []])
     const [validAnswers, setValidAnswers] = useState([])
     const [invalidGuess, setInvalidGuess] = useState([false, false, false, false, false]);
-    const [bounce, setBounce] = useState(false);
     const inputRefs = useRef(
         Array.from(
             { length: 5 }, (_, i) => Array.from({ length: i + 1 }, () => React.createRef())
         )
     );
     useEffect(() => {
+        setCurrentColumn(0);
         switch (currentRow) {
             case 0: inputRefs.current[0][0].current.focus(); break;
             case 1: inputRefs.current[1][0].current.focus(); break;
@@ -55,10 +56,15 @@ const App = () => {
         }
         if (e.key === 'Backspace' && e.target.value === "" && j > 0) {
             inputRefs.current[i][j - 1]?.current?.focus();
+            const clone = [...guess]
+            clone[i][j-1]=""
+            setGuess(clone);
+            setCurrentColumn(j-1);
         }
         if (e.key === 'Enter' && i === j) {
             const trimmed = guess[i].join("").toLowerCase().trim();
             const validGuess = (validGuesses[i].includes(trimmed) || validAnswers.includes(trimmed)) && trimmed.length === (i + 1);
+
             if (!validGuess) {
                 shakeyshake(i);
             } else {
@@ -72,6 +78,7 @@ const App = () => {
         }
     }
     const evaluate = (row) => {
+        
         const words = word.split("");
         const m = new Map();
         const newStatus = [...status.map(row => [...row])];
@@ -79,18 +86,28 @@ const App = () => {
             if (m.get(words[j]) === undefined) m.set(words[j], 0);
             m.set(words[j], m.get(words[j]) + 1);
         }
+        
         for (var i = 0; i < guess[row].length; i++) {
             if (guess[row][i] === words[i]) {
                 newStatus[row][i] = "correct"
                 m.set(words[i], m.get(words[i]) - 1);
+                document.getElementById(guess[row][i].toUpperCase()).classList.remove("absent")
+                document.getElementById(guess[row][i].toUpperCase()).classList.remove("present")
+                document.getElementById(guess[row][i].toUpperCase()).classList.add("correct")
             }
         }
         for (var k = 0; k < guess[row].length; k++) {
             if (m.get(guess[row][k]) !== undefined && m.get(guess[row][k]) > 0 && newStatus[row][k] !== "correct") {
                 newStatus[row][k] = "present";
                 m.set(guess[row][k], m.get(guess[row][k]) - 1);
+                if(!document.getElementById(guess[row][k].toUpperCase()).classList.contains("correct")){
+                    document.getElementById(guess[row][k].toUpperCase()).classList.add("present")
+                }
             }
-            else if (newStatus[row][k] !== "correct") newStatus[row][k] = "absent"
+            else if(newStatus[row][k] !== "correct"){
+                newStatus[row][k] = "absent"
+                document.getElementById(guess[row][k].toUpperCase()).classList.add("absent")
+            }
         }
         setStatus(newStatus);
     }
@@ -104,21 +121,38 @@ const App = () => {
             setInvalidGuess(arr)
         }, 500)
     }
-    const bouncey = () => {
-        setBounce(true);
-        setTimeout(() => {
-            setBounce(false);
-        }, 500);
-    }
     const handleGuess = (e, i, j) => {
-        const val = e.target.value;
+        const val = e.target.value.toLowerCase().trim();
+        document.getElementById(`guess${i+1}${j+1}`).classList.add("bounce")
+        setTimeout(() => {
+            document.getElementById(`guess${i+1}${j+1}`).classList.remove("bounce")
+        }, 500);
         if (/^[a-zA-Z]$/.test(val) || val === "") {
             const newGuess = [...guess];
             newGuess[i][j] = val;
             setGuess(newGuess);
             if (j < i && val !== "") {
                 inputRefs.current[i][j + 1]?.current?.focus();
+                setCurrentColumn(j+1)
             }
+        }
+
+    }
+    const handleKeyBoardGuess =(val)=>{
+        if(val==="ENTER"){
+            handleEnter({key:"Enter",target:{value:""}},currentRow,currentColumn)
+        }
+        else if (val==="⌫"){
+            if(guess[currentRow][currentColumn]===""){
+                handleEnter({key:"Backspace",target:{value:""}},currentRow,currentColumn)
+            }else{
+                const clone = [...guess]
+                clone[currentRow][currentColumn]=""
+                setGuess(clone);
+            }
+        }
+        else{
+            handleGuess({key:val,target:{value:val}},currentRow,currentColumn)
         }
 
     }
@@ -126,38 +160,38 @@ const App = () => {
         <>
             <Header />
             <p id = "message" className={message===""?"hidden":""}>{message || "..."}</p>
-            <div className="pyramid p-4 max-w-[600px] mx-auto">
+            <div   className="pyramid p-4 max-w-[600px] mx-auto">
                 <div className="row">
-                    <input type="text" autoComplete="off" ref={inputRefs.current[0][0]} disabled={currentRow !== 0} id="guess11" className={`square ${invalidGuess[0] ? 'shake' : ''}${status[0][0]} `} minLength="0" maxLength="1" value={guess[0][0]} onChange={(e) => handleGuess(e, 0, 0)} onKeyDown={(e) => handleEnter(e, 0, 0)} />
+                    <input inputMode="none" type="text" autoComplete="off" ref={inputRefs.current[0][0]} disabled={currentRow !== 0} id="guess11" className={`square ${invalidGuess[0] ? 'shake' : ''}${status[0][0]} `} minLength="0" maxLength="1" value={guess[0][0]} onChange={(e) => handleGuess(e, 0, 0)} onKeyDown={(e) => handleEnter(e, 0, 0)} />
                 </div>
 
                 <div className="row">
-                    <input type="text" autoComplete="off" ref={inputRefs.current[1][0]} disabled={currentRow !== 1} id="guess21" className={`square ${invalidGuess[1] ? 'shake' : ''}${status[1][0]}`} minLength="0" maxLength="1" value={guess[1][0]} onChange={(e) => handleGuess(e, 1, 0)} onKeyDown={(e) => handleEnter(e, 1, 0)} />
-                    <input type="text" autoComplete="off" ref={inputRefs.current[1][1]} disabled={currentRow !== 1} id="guess22" className={`square ${invalidGuess[1] ? 'shake' : ''}${status[1][1]}`} minLength="0" maxLength="1" value={guess[1][1]} onChange={(e) => handleGuess(e, 1, 1)} onKeyDown={(e) => handleEnter(e, 1, 1)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[1][0]} disabled={currentRow !== 1} id="guess21" className={`square ${invalidGuess[1] ? 'shake' : ''}${status[1][0]}`} minLength="0" maxLength="1" value={guess[1][0]} onChange={(e) => handleGuess(e, 1, 0)} onKeyDown={(e) => handleEnter(e, 1, 0)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[1][1]} disabled={currentRow !== 1} id="guess22" className={`square ${invalidGuess[1] ? 'shake' : ''}${status[1][1]}`} minLength="0" maxLength="1" value={guess[1][1]} onChange={(e) => handleGuess(e, 1, 1)} onKeyDown={(e) => handleEnter(e, 1, 1)} />
                 </div>
 
                 <div className="row">
-                    <input type="text" autoComplete="off" ref={inputRefs.current[2][0]} disabled={currentRow !== 2} id="guess31" className={`square ${invalidGuess[2] ? 'shake' : ''}${status[2][0]}`} minLength="0" maxLength="1" value={guess[2][0]} onChange={(e) => handleGuess(e, 2, 0)} onKeyDown={(e) => handleEnter(e, 2, 0)} />
-                    <input type="text" autoComplete="off" ref={inputRefs.current[2][1]} disabled={currentRow !== 2} id="guess32" className={`square ${invalidGuess[2] ? 'shake' : ''}${status[2][1]}`} minLength="0" maxLength="1" value={guess[2][1]} onChange={(e) => handleGuess(e, 2, 1)} onKeyDown={(e) => handleEnter(e, 2, 1)} />
-                    <input type="text" autoComplete="off" ref={inputRefs.current[2][2]} disabled={currentRow !== 2} id="guess33" className={`square ${invalidGuess[2] ? 'shake' : ''}${status[2][2]}`} minLength="0" maxLength="1" value={guess[2][2]} onChange={(e) => handleGuess(e, 2, 2)} onKeyDown={(e) => handleEnter(e, 2, 2)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[2][0]} disabled={currentRow !== 2} id="guess31" className={`square ${invalidGuess[2] ? 'shake' : ''}${status[2][0]}`} minLength="0" maxLength="1" value={guess[2][0]} onChange={(e) => handleGuess(e, 2, 0)} onKeyDown={(e) => handleEnter(e, 2, 0)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[2][1]} disabled={currentRow !== 2} id="guess32" className={`square ${invalidGuess[2] ? 'shake' : ''}${status[2][1]}`} minLength="0" maxLength="1" value={guess[2][1]} onChange={(e) => handleGuess(e, 2, 1)} onKeyDown={(e) => handleEnter(e, 2, 1)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[2][2]} disabled={currentRow !== 2} id="guess33" className={`square ${invalidGuess[2] ? 'shake' : ''}${status[2][2]}`} minLength="0" maxLength="1" value={guess[2][2]} onChange={(e) => handleGuess(e, 2, 2)} onKeyDown={(e) => handleEnter(e, 2, 2)} />
                 </div>
 
                 <div className="row">
-                    <input type="text" autoComplete="off" ref={inputRefs.current[3][0]} disabled={currentRow !== 3} id="guess41" className={`square ${invalidGuess[3] ? 'shake' : ''}${status[3][0]}`} minLength="0" maxLength="1" value={guess[3][0]} onChange={(e) => handleGuess(e, 3, 0)} onKeyDown={(e) => handleEnter(e, 3, 0)} />
-                    <input type="text" autoComplete="off" ref={inputRefs.current[3][1]} disabled={currentRow !== 3} id="guess42" className={`square ${invalidGuess[3] ? 'shake' : ''}${status[3][1]}`} minLength="0" maxLength="1" value={guess[3][1]} onChange={(e) => handleGuess(e, 3, 1)} onKeyDown={(e) => handleEnter(e, 3, 1)} />
-                    <input type="text" autoComplete="off" ref={inputRefs.current[3][2]} disabled={currentRow !== 3} id="guess43" className={`square ${invalidGuess[3] ? 'shake' : ''}${status[3][2]}`} minLength="0" maxLength="1" value={guess[3][2]} onChange={(e) => handleGuess(e, 3, 2)} onKeyDown={(e) => handleEnter(e, 3, 2)} />
-                    <input type="text" autoComplete="off" ref={inputRefs.current[3][3]} disabled={currentRow !== 3} id="guess44" className={`square ${invalidGuess[3] ? 'shake' : ''}${status[3][3]}`} minLength="0" maxLength="1" value={guess[3][3]} onChange={(e) => handleGuess(e, 3, 3)} onKeyDown={(e) => handleEnter(e, 3, 3)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[3][0]} disabled={currentRow !== 3} id="guess41" className={`square ${invalidGuess[3] ? 'shake' : ''}${status[3][0]}`} minLength="0" maxLength="1" value={guess[3][0]} onChange={(e) => handleGuess(e, 3, 0)} onKeyDown={(e) => handleEnter(e, 3, 0)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[3][1]} disabled={currentRow !== 3} id="guess42" className={`square ${invalidGuess[3] ? 'shake' : ''}${status[3][1]}`} minLength="0" maxLength="1" value={guess[3][1]} onChange={(e) => handleGuess(e, 3, 1)} onKeyDown={(e) => handleEnter(e, 3, 1)} />
+                    <input inputmode="none"  type="text" autoComplete="off" ref={inputRefs.current[3][2]} disabled={currentRow !== 3} id="guess43" className={`square ${invalidGuess[3] ? 'shake' : ''}${status[3][2]}`} minLength="0" maxLength="1" value={guess[3][2]} onChange={(e) => handleGuess(e, 3, 2)} onKeyDown={(e) => handleEnter(e, 3, 2)} />
+                    <input inputmode="none"  type="text" autoComplete="off" ref={inputRefs.current[3][3]} disabled={currentRow !== 3} id="guess44" className={`square ${invalidGuess[3] ? 'shake' : ''}${status[3][3]}`} minLength="0" maxLength="1" value={guess[3][3]} onChange={(e) => handleGuess(e, 3, 3)} onKeyDown={(e) => handleEnter(e, 3, 3)} />
                 </div>
 
                 <div className="row">
-                    <input type="text" autoComplete="off" ref={inputRefs.current[4][0]} disabled={currentRow !== 4} id="guess51" className={`square ${invalidGuess[4] ? 'shake' : ''}${status[4][0]}`} minLength="0" maxLength="1" value={guess[4][0]} onChange={(e) => handleGuess(e, 4, 0)} onKeyDown={(e) => handleEnter(e, 4, 0)} />
-                    <input type="text" autoComplete="off" ref={inputRefs.current[4][1]} disabled={currentRow !== 4} id="guess52" className={`square ${invalidGuess[4] ? 'shake' : ''}${status[4][1]}`} minLength="0" maxLength="1" value={guess[4][1]} onChange={(e) => handleGuess(e, 4, 1)} onKeyDown={(e) => handleEnter(e, 4, 1)} />
-                    <input type="text" autoComplete="off" ref={inputRefs.current[4][2]} disabled={currentRow !== 4} id="guess53" className={`square ${invalidGuess[4] ? 'shake' : ''}${status[4][2]}`} minLength="0" maxLength="1" value={guess[4][2]} onChange={(e) => handleGuess(e, 4, 2)} onKeyDown={(e) => handleEnter(e, 4, 2)} />
-                    <input type="text" autoComplete="off" ref={inputRefs.current[4][3]} disabled={currentRow !== 4} id="guess54" className={`square ${invalidGuess[4] ? 'shake' : ''}${status[4][3]}`} minLength="0" maxLength="1" value={guess[4][3]} onChange={(e) => handleGuess(e, 4, 3)} onKeyDown={(e) => handleEnter(e, 4, 3)} />
-                    <input type="text" autoComplete="off" ref={inputRefs.current[4][4]} disabled={currentRow !== 4} id="guess55" className={`square ${invalidGuess[4] ? 'shake' : ''}${status[4][4]}`} minLength="0" maxLength="1" value={guess[4][4]} onChange={(e) => handleGuess(e, 4, 4)} onKeyDown={(e) => handleEnter(e, 4, 4)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[4][0]} disabled={currentRow !== 4} id="guess51" className={`square ${invalidGuess[4] ? 'shake' : ''}${status[4][0]}`} minLength="0" maxLength="1" value={guess[4][0]} onChange={(e) => handleGuess(e, 4, 0)} onKeyDown={(e) => handleEnter(e, 4, 0)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[4][1]} disabled={currentRow !== 4} id="guess52" className={`square ${invalidGuess[4] ? 'shake' : ''}${status[4][1]}`} minLength="0" maxLength="1" value={guess[4][1]} onChange={(e) => handleGuess(e, 4, 1)} onKeyDown={(e) => handleEnter(e, 4, 1)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[4][2]} disabled={currentRow !== 4} id="guess53" className={`square ${invalidGuess[4] ? 'shake' : ''}${status[4][2]}`} minLength="0" maxLength="1" value={guess[4][2]} onChange={(e) => handleGuess(e, 4, 2)} onKeyDown={(e) => handleEnter(e, 4, 2)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[4][3]} disabled={currentRow !== 4} id="guess54" className={`square ${invalidGuess[4] ? 'shake' : ''}${status[4][3]}`} minLength="0" maxLength="1" value={guess[4][3]} onChange={(e) => handleGuess(e, 4, 3)} onKeyDown={(e) => handleEnter(e, 4, 3)} />
+                    <input inputMode="none"  type="text" autoComplete="off" ref={inputRefs.current[4][4]} disabled={currentRow !== 4} id="guess55" className={`square ${invalidGuess[4] ? 'shake' : ''}${status[4][4]}`} minLength="0" maxLength="1" value={guess[4][4]} onChange={(e) => handleGuess(e, 4, 4)} onKeyDown={(e) => handleEnter(e, 4, 4)} />
                 </div>
             </div>
-            <Keyboard/>
+            <Keyboard onClick={handleKeyBoardGuess}/>
             <Footer />
         </>
     )
