@@ -113,7 +113,6 @@ const App = () => {
         }
         setStatus(newStatus);
         setLetters(newLetters);
-        console.log(newLetters);
     }
     const shakeyshake = (i) => {
         var arr = [...invalidGuess]
