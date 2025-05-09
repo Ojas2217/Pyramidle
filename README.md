@@ -2,7 +2,7 @@
 
 # Pyramidle
 
-Pyramidle is a word game inspired by wordle, you can play pyramidle [here](https://pyramidle.vercel.app)
+Pyramidle is a word game inspired by wordle it was built using react, styled with tailwind css and deployed through vercel.You can play pyramidle [here](https://pyramidle.vercel.app)
 
 # Installation
 
